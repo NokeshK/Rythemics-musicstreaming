@@ -23,8 +23,6 @@ export default function ResponsiveAppBar() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const ageRanges = ["1-12", "12-22", "22-34", "25-32", "32-44", "44-56", "56-66", "66-78", "78-90", "90-100"];
-
   useEffect(() => {
     localStorage.setItem("isSignedIn", isSignedIn);
   }, [isSignedIn]);
@@ -37,19 +35,6 @@ export default function ResponsiveAppBar() {
     setIsSignedIn(false);
     localStorage.removeItem("isSignedIn");
     navigate("/");
-  };
-
-  const handleAgeMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleAgeMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleAgeSelect = (ageRange) => {
-    navigate(`/songs/${ageRange.replace("-", "_")}`);
-    handleAgeMenuClose();
   };
 
   const handleSearch = () => {
@@ -65,8 +50,6 @@ export default function ResponsiveAppBar() {
 
     if (routes[query]) {
       navigate(routes[query]);
-    } else if (ageRanges.includes(searchQuery)) {
-      navigate(`/songs/${searchQuery.replace("-", "_")}`);
     } else if (query !== "") {
       navigate(`/search?q=${searchQuery}`);
     }
@@ -128,21 +111,8 @@ export default function ResponsiveAppBar() {
 
           {/* Navigation & Profile Section */}
           <Box sx={{ display: "flex", gap: 2 }}>
-            {/* Age Dropdown */}
-            <Button onClick={handleAgeMenuOpen} sx={{ color: "white", display: "flex", alignItems: "center" }}>
-              Age <ArrowDropDownIcon />
-            </Button>
-            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleAgeMenuClose}>
-              {ageRanges.map((range, index) => (
-                <MenuItem key={index} onClick={() => handleAgeSelect(range)}>
-                  {range}
-                </MenuItem>
-              ))}
-            </Menu>
-
             {isSignedIn ? (
               <>
-                <Button onClick={() => handleNavigate("products")} sx={{ color: "white" }}>Products</Button>
                 <Button onClick={() => handleNavigate("download")} sx={{ color: "white" }}>Download</Button>
                 <Button onClick={() => handleNavigate("support")} sx={{ color: "white" }}>Support</Button>
                 <Button onClick={() => handleNavigate("languages")} sx={{ color: "white" }}>Languages</Button>
