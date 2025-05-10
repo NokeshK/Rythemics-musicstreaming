@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   AppBar,
   Box,
@@ -16,24 +16,20 @@ import {
 import { useNavigate } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { useAuth } from "./context/AuthContext";
 
 export default function ResponsiveAppBar() {
   const navigate = useNavigate();
-  const [isSignedIn, setIsSignedIn] = useState(localStorage.getItem("isSignedIn") === "true");
+  const { user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    localStorage.setItem("isSignedIn", isSignedIn);
-  }, [isSignedIn]);
 
   const handleNavigate = (page) => {
     navigate(`/${page.toLowerCase()}`);
   };
 
   const handleSignOut = () => {
-    setIsSignedIn(false);
-    localStorage.removeItem("isSignedIn");
+    logout();
     navigate("/");
   };
 
@@ -111,14 +107,18 @@ export default function ResponsiveAppBar() {
 
           {/* Navigation & Profile Section */}
           <Box sx={{ display: "flex", gap: 2 }}>
-            {isSignedIn ? (
+            {user ? (
               <>
                 <Button onClick={() => handleNavigate("download")} sx={{ color: "white" }}>Download</Button>
                 <Button onClick={() => handleNavigate("support")} sx={{ color: "white" }}>Support</Button>
                 <Button onClick={() => handleNavigate("languages")} sx={{ color: "white" }}>Languages</Button>
-                <Button onClick={() => handleNavigate("payment")} sx={{ color: "white" }}>Payment</Button> {/* Added Payment Button */}
-                <Button onClick={() => handleNavigate("premium")} sx={{ color: "white" }}>Premium</Button> {/* Added Premium Button */}
-                <Button onClick={handleSignOut} sx={{ color: "white" }}>Sign Out</Button>
+                <Button onClick={() => handleNavigate("payment")} sx={{ color: "white" }}>Payment</Button>
+                <Button onClick={() => handleNavigate("premium")} sx={{ color: "white" }}>Premium</Button>
+                <Tooltip title={`${user.role} - Sign Out`}>
+                  <IconButton onClick={handleSignOut} sx={{ p: 0 }}>
+                    <Avatar alt={user.email} src="/static/images/avatar/2.jpg" />
+                  </IconButton>
+                </Tooltip>
               </>
             ) : (
               <>

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import ResponsiveAppBar from "./ResponsiveAppBar";
 import Premium from "./components/Premium";
@@ -11,27 +11,61 @@ import Languages from "./components/Languages"; // Import Languages Component
 import LanguagePage from "./components/LanguagePage";
 import SongsPage from "./SongsPage"; // Ensure this is correctly imported
 import Payment from "./components/Payment"; // Import Payment component
+import SignIn from "./components/SignIn";
+import Register from "./components/Register";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import { FaInstagram, FaWhatsapp, FaTwitter, FaMusic } from "react-icons/fa";
 
+// Protected Route component
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return <Navigate to="/signin" />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" />;
+  }
+
+  return children;
+};
+
 function App() {
   return (
-    <Router>
-      <ResponsiveAppBar />
-      <Routes>
-        <Route path="/" element={<><Home /><Footer /></>} />
-        <Route path="/premium" element={<Premium />} />
-        <Route path="/support" element={<Support />} />
-        <Route path="/download" element={<Download />} />
-        <Route path="/signin" element={<CredentialsSignInPage />} />
-        <Route path="/welcome" element={<WelcomePage />} />
-        <Route path="/languages" element={<Languages />} /> 
-        <Route path="/languages/:language" element={<LanguagePage />} />
-        <Route path="/songs/:ageRange" element={<SongsPage />} /> {/* Fixed the component name */}
-        <Route path="/payment" element={<Payment />} /> {/* Added route for Payment */}
-
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <ResponsiveAppBar />
+        <Routes>
+          <Route path="/" element={<><Home /><Footer /></>} />
+          <Route path="/premium" element={<Premium />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/download" element={<Download />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/welcome" element={<WelcomePage />} />
+          <Route path="/languages" element={<Languages />} /> 
+          <Route path="/languages/:language" element={<LanguagePage />} />
+          <Route 
+            path="/songs/:ageRange" 
+            element={
+              <ProtectedRoute allowedRoles={['user', 'admin']}>
+                <SongsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/payment" 
+            element={
+              <ProtectedRoute allowedRoles={['user', 'admin']}>
+                <Payment />
+              </ProtectedRoute>
+            } 
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

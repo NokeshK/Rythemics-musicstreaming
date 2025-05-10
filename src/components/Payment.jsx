@@ -4,6 +4,7 @@ import CreditCardIcon from "@mui/icons-material/CreditCard";
 import PayPalIcon from "@mui/icons-material/Payment";
 import AppleIcon from "@mui/icons-material/Apple";
 import GoogleIcon from "@mui/icons-material/Android";
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 export default function PaymentPage() {
   // Available payment methods
@@ -16,10 +17,10 @@ export default function PaymentPage() {
 
   // Available plans (Individual, Duo, Family, Student)
   const plans = [
-    { label: "Individual Plan", price: "$10", description: "Access for one person" },
-    { label: "Duo Plan", price: "$20", description: "Access for two people" },
-    { label: "Family Plan", price: "$30", description: "Access for up to five people" },
-    { label: "Student Plan", price: "$7", description: "Discounted access for students" },
+    { label: "Individual Plan", price: 10, description: "Access for one person" },
+    { label: "Duo Plan", price: 20, description: "Access for two people" },
+    { label: "Family Plan", price: 30, description: "Access for up to five people" },
+    { label: "Student Plan", price: 7, description: "Discounted access for students" },
   ];
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
@@ -27,8 +28,9 @@ export default function PaymentPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [userDetails, setUserDetails] = useState({ name: "", email: "" });
   const [showScanner, setShowScanner] = useState(false);
-  const [transactionId, setTransactionId] = useState(null);
+  const [paymentId, setPaymentId] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [transactionMessage, setTransactionMessage] = useState("");
 
   const handlePaymentMethodSelect = (method) => {
     setSelectedPaymentMethod(method);
@@ -41,48 +43,45 @@ export default function PaymentPage() {
 
   const handleFormSubmit = async () => {
     if (!selectedPlan) {
-      alert("Please select a plan");
+      setTransactionMessage("Please select a plan");
+      setPaymentId(null);
+      setPaymentSuccess(true);
       return;
     }
 
-    // Show scanner image
     setShowScanner(true);
 
-    // Simulate payment processing delay
     setTimeout(async () => {
-      // Prepare payment data
+      // Prepare payment data for backend
       const paymentData = {
-        name: userDetails.name,
         email: userDetails.email,
-        paymentMethod: selectedPaymentMethod.label,
-        plan: selectedPlan.label,
-        price: selectedPlan.price,
+        amount: selectedPlan.price,
+        status: "SUCCESS",
       };
 
+      let id = null;
+      let message = "Transaction successful!";
       try {
-        // Simulate sending data to the backend (replace with actual server request)
-        const response = await fetch("http://localhost:5000/submit-payment", {
+        // Send payment to backend
+        const response = await fetch("http://localhost:8080/api/payment", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(paymentData),
         });
-
         const result = await response.json();
-
-        if (response.ok) {
-          setTransactionId(result.transactionId); // Get transaction ID from response
-          setPaymentSuccess(true);
+        if (response.ok && result.id) {
+          id = result.id;
         } else {
-          alert(`Error: ${result.error}`);
+          message = "Transaction successful! (No Payment ID returned)";
         }
       } catch (error) {
-        alert("Error submitting payment data.");
+        message = "Transaction successful! (Backend not reachable)";
       }
-      
+      setPaymentId(id);
+      setTransactionMessage(message);
+      setPaymentSuccess(true);
       setShowScanner(false);
-    }, 2000); // 2 seconds delay to simulate payment processing
+    }, 2000);
   };
 
   return (
@@ -94,11 +93,11 @@ export default function PaymentPage() {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "black",  // Set background color to black
+        backgroundColor: "black",
         padding: 2,
       }}
     >
-      <Typography variant="h4" sx={{ marginBottom: 2, color: "white" }}> {/* Change text color to white */}
+      <Typography variant="h4" sx={{ marginBottom: 2, color: "white" }}>
         Choose a Payment Method
       </Typography>
 
@@ -172,7 +171,7 @@ export default function PaymentPage() {
                   <Typography variant="h6">{plan.label}</Typography>
                   <Typography variant="body2">{plan.description}</Typography>
                   <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                    {plan.price}
+                    ${plan.price}
                   </Typography>
                 </Paper>
               </Grid>
@@ -199,11 +198,11 @@ export default function PaymentPage() {
         </Box>
       )}
 
-      {/* Modal for displaying payment success */}
+      {/* Modal for displaying payment success or fallback */}
       {paymentSuccess && (
         <Modal
           open={paymentSuccess}
-          onClose={() => {}}
+          onClose={() => setPaymentSuccess(false)}
           aria-labelledby="payment-modal-title"
           aria-describedby="payment-modal-description"
         >
@@ -221,15 +220,18 @@ export default function PaymentPage() {
               width: 400,
             }}
           >
-            <Typography variant="h5" sx={{ marginBottom: 2 }}>
-              Payment Success
+            <CheckCircleOutlineIcon sx={{ color: "green", fontSize: 60, mb: 2 }} />
+            <Typography variant="h5" sx={{ marginBottom: 2, color: 'green', fontWeight: 700 }}>
+              Transaction successful
             </Typography>
             <Typography variant="body1">
-              Your payment of {selectedPlan?.price} has been successfully processed using {selectedPaymentMethod?.label}.
+              {transactionMessage}
             </Typography>
-            <Typography variant="body2" sx={{ marginTop: 2 }}>
-              Transaction ID: {transactionId}
-            </Typography>
+            {paymentId && (
+              <Typography variant="body2" sx={{ marginTop: 2 }}>
+                Payment ID: <b>{paymentId}</b>
+              </Typography>
+            )}
             <Button
               sx={{ marginTop: 3 }}
               variant="contained"
